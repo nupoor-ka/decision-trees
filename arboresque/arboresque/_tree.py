@@ -68,14 +68,16 @@ def build_tree(X, y, criterion, leaf_val_func, task, depth=0, max_depth=None, mi
     """
     n_samples = len(y)
     
+    pure_node = False
+    cc = None
     if task=='classification':
         unique_classes, counts = np.unique(y, return_counts=True)
         value = unique_classes[np.argmax(counts)] # majority class
         if len(unique_classes) == 1:
             pure_node=True
+        cc = counts
     else:
         value = leaf_val_func(y)
-        pure_node=False
     
     # stopping conditions
     if (max_depth is not None and depth >= max_depth) or \
@@ -100,13 +102,6 @@ def build_tree(X, y, criterion, leaf_val_func, task, depth=0, max_depth=None, mi
     left_child = build_tree(X_left, y_left, criterion, leaf_val_func, task, depth + 1, max_depth, min_samples_split)
     right_child = build_tree(X_right, y_right, criterion, leaf_val_func, task, depth + 1, max_depth, min_samples_split)
 
-    # class counts
-    if task=='regression':
-        cc=None
-    else:
-        cc=counts
-
-    
     return Node(
         feature_index=best_feature,
         threshold=best_threshold,

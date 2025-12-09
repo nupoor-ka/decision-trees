@@ -15,8 +15,11 @@ class DecisionTreeClassifier:
             raise ValueError("unknown criterion")
 
     def fit(self, X, y):
+        X = np.asarray(X)
+        y = np.asarray(y)
+        self.classes_, y_encoded = np.unique(y, return_inverse=True) # to prevent negative labels, labelling from 
         root = build_tree(
-            X, y,
+            X, y_encoded,
             criterion=self.criterion_func,
             leaf_val_func=None, # not needed for classification
             task="classification",
@@ -33,7 +36,7 @@ class DecisionTreeClassifier:
         rt = self.tree_.root
         while rt:
             if rt.is_leaf:
-                return rt.value
+                return self.classes_[rt.value]
             if x[rt.feature_index]<=rt.threshold:
                 rt = rt.left
             else:
@@ -69,8 +72,10 @@ class DecisionTreeClassifier:
         return np.array([self._predict_proba(x) for x in X])
     
     def score(self, X, y):
+        X = np.asarray(X)
+        y = np.asarray(y)
         y_pred = self.predict(X)
-        pass
+        return np.mean(y_pred==y)
 
 class DecisionTreeRegressor:
     def __init__(self, criterion="mse", max_depth=None, min_samples_split=2):
@@ -91,6 +96,10 @@ class DecisionTreeRegressor:
             raise ValueError("Unknown criterion")
     
     def fit(self, X, y):
+        X = np.asarray(X)
+        y = np.asarray(y)
+        n_samples, n_features = X.shape
+        self.n_features = n_features
         root = build_tree(
             X, y,
             criterion=self.criterion_func,
@@ -123,6 +132,8 @@ class DecisionTreeRegressor:
         return np.array([self._predict(x) for x in X])
     
     def score(self, X, y):
+        X = np.asarray(X)
+        y = np.asarray(y)
         y_pred = self.predict(X)
         v = np.sum((y - np.mean(y))**2)
         u = np.sum((y - y_pred)**2)
