@@ -1,6 +1,7 @@
 import numpy as np
 
-def find_best_split(X, y, criterion):
+def find_best_split(X, y, criterion, n_total_samples, min_samples_leaf=1, min_impurity_decrease=0.0,
+                    max_features=None):
     """
     criterion is the impurity metric user chose
     that criterion determines whether regression or classification
@@ -15,14 +16,20 @@ def find_best_split(X, y, criterion):
     best_gain = 0.0
     best_feature = None
     best_threshold = None
+
+    # max_features
+    if max_features is None or max_features==n_features:
+        poss_features = list(range(n_features))
+    else:
+        poss_features = np.random.choice(n_features, max_features, replace=False)
     
-    for feature_idx in range(n_features):
+    for feature_idx in poss_features:
         thresholds = np.unique(X[:, feature_idx]) # possible thresholds for this feature
         
         for threshold in thresholds:
             left_mask = X[:, feature_idx] <= threshold
             right_mask = ~left_mask
-            if left_mask.sum() == 0 or right_mask.sum() == 0: # should only be the case for right
+            if left_mask.sum()<min_samples_leaf or right_mask.sum()<min_samples_leaf:
                 continue
             
             y_left = y[left_mask]
@@ -39,5 +46,10 @@ def find_best_split(X, y, criterion):
                 best_gain = gain
                 best_feature = feature_idx
                 best_threshold = threshold
+
+    # min_impurity_decrease
+    impurity_decrease = (n_samples / n_total_samples) * best_gain
+    if impurity_decrease>=min_impurity_decrease:
+        return best_feature, best_threshold, best_gain
     
-    return best_feature, best_threshold, best_gain
+    return None, None, 0.0

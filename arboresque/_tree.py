@@ -58,7 +58,9 @@ class Tree:
                     q.append(rt.right)
         return n_leaves
 
-def build_tree(X, y, criterion, leaf_val_func, task, n_classes=None, depth=0, max_depth=None, min_samples_split=2):
+def build_tree(X, y, criterion, n_total_samples, leaf_val_func, task, n_classes=None, depth=0, max_depth=None,
+               min_samples_split=2, min_samples_leaf=1, min_impurity_decrease=0.0,
+               max_features=None):
     """
     max_depth and min_samples_split are stopping options
     max_depth : int or None
@@ -85,7 +87,10 @@ def build_tree(X, y, criterion, leaf_val_func, task, n_classes=None, depth=0, ma
         return Node(value=value, n_samples=n_samples, class_counts=cc)
     
     # best split
-    best_feature, best_threshold, best_gain = find_best_split(X, y, criterion)
+    best_feature, best_threshold, best_gain = find_best_split(X, y, criterion, n_total_samples,
+                                                              min_samples_leaf=min_samples_leaf,
+                                                              min_impurity_decrease=min_impurity_decrease,
+                                                              max_features=max_features)
     
     # no valid split found
     if best_feature is None or best_gain == 0:
@@ -98,8 +103,24 @@ def build_tree(X, y, criterion, leaf_val_func, task, n_classes=None, depth=0, ma
     X_right, y_right = X[right_mask], y[right_mask]
     
     # recurse
-    left_child = build_tree(X_left, y_left, criterion, leaf_val_func, task, n_classes, depth + 1, max_depth, min_samples_split)
-    right_child = build_tree(X_right, y_right, criterion, leaf_val_func, task, n_classes, depth + 1, max_depth, min_samples_split)
+    left_child = build_tree(X_left, y_left, criterion, n_total_samples,
+                            leaf_val_func=leaf_val_func, task=task,
+                            n_classes=n_classes,
+                            depth=depth + 1,
+                            max_depth=max_depth,
+                            min_samples_split=min_samples_split,
+                            min_samples_leaf=min_samples_leaf,
+                            min_impurity_decrease=min_impurity_decrease,
+                            max_features=max_features)
+    right_child = build_tree(X_right, y_right, criterion, n_total_samples,
+                            leaf_val_func=leaf_val_func, task=task,
+                            n_classes=n_classes,
+                            depth=depth + 1,
+                            max_depth=max_depth,
+                            min_samples_split=min_samples_split,
+                            min_samples_leaf=min_samples_leaf,
+                            min_impurity_decrease=min_impurity_decrease,
+                            max_features=max_features)
 
     return Node(
         feature_index=best_feature,
